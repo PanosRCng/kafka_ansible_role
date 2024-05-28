@@ -1,0 +1,298 @@
+services:
+
+  zookeeper1:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zookeeper1
+    container_name: kafka_stack_zookeeper1
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER1_CLIENT_PORT}
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+    volumes:
+      - zookeeper1_data:/var/lib/zookeeper/data
+      - zookeeper1_log:/var/lib/zookeeper/log
+    networks:
+      - kafka_net
+    ports:
+      - ${ZOOKEEPER1_CLIENT_PORT}:${ZOOKEEPER1_CLIENT_PORT}
+
+  zookeeper2:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zookeeper2
+    container_name: kafka_stack_zookeeper2
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER2_CLIENT_PORT}
+      ZOOKEEPER_SERVER_ID: 2
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+    volumes:
+      - zookeeper2_data:/var/lib/zookeeper/data
+      - zookeeper2_log:/var/lib/zookeeper/log
+    networks:
+      - kafka_net
+    ports:
+      - ${ZOOKEEPER2_CLIENT_PORT}:${ZOOKEEPER2_CLIENT_PORT}
+
+  zookeeper3:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zookeeper3
+    container_name: kafka_stack_zookeeper3
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER3_CLIENT_PORT}
+      ZOOKEEPER_SERVER_ID: 3
+      ZOOKEEPER_SERVERS: zookeeper1:2888:3888;zookeeper2:2888:3888;zookeeper3:2888:3888
+    volumes:
+      - zookeeper3_data:/var/lib/zookeeper/data
+      - zookeeper3_log:/var/lib/zookeeper/log
+    networks:
+      - kafka_net
+    ports:
+      - ${ZOOKEEPER3_CLIENT_PORT}:${ZOOKEEPER3_CLIENT_PORT}
+
+  kafka1:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka1
+    container_name: kafka_stack_kafka1
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka1:${KAFKA1_INTERNAL_PORT},EXTERNAL://${NETWORK_GATEWAY}:${KAFKA1_EXTERNAL_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:${ZOOKEEPER1_CLIENT_PORT},zookeeper2:${ZOOKEEPER2_CLIENT_PORT},zookeeper3:${ZOOKEEPER3_CLIENT_PORT}
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    networks:
+      - kafka_net
+    volumes:
+      - kafka1:/var/lib/kafka/data
+    ports:
+      - ${KAFKA1_EXTERNAL_PORT}:${KAFKA1_EXTERNAL_PORT}
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  kafka2:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka2
+    container_name: kafka_stack_kafka2
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka2:${KAFKA2_INTERNAL_PORT},EXTERNAL://${NETWORK_GATEWAY}:${KAFKA2_EXTERNAL_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:${ZOOKEEPER1_CLIENT_PORT},zookeeper2:${ZOOKEEPER2_CLIENT_PORT},zookeeper3:${ZOOKEEPER3_CLIENT_PORT}
+      KAFKA_BROKER_ID: 2
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    networks:
+      - kafka_net
+    volumes:
+      - kafka2:/var/lib/kafka/data
+    ports:
+      - ${KAFKA2_EXTERNAL_PORT}:${KAFKA2_EXTERNAL_PORT}
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  kafka3:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka3
+    container_name: kafka_stack_kafka3
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka3:${KAFKA3_INTERNAL_PORT},EXTERNAL://${NETWORK_GATEWAY}:${KAFKA3_EXTERNAL_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:${ZOOKEEPER1_CLIENT_PORT},zookeeper2:${ZOOKEEPER2_CLIENT_PORT},zookeeper3:${ZOOKEEPER3_CLIENT_PORT}
+      KAFKA_BROKER_ID: 3
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    networks:
+      - kafka_net
+    volumes:
+      - kafka3:/var/lib/kafka/data
+    ports:
+      - ${KAFKA3_EXTERNAL_PORT}:${KAFKA3_EXTERNAL_PORT}
+    depends_on:
+      - zookeeper1
+      - zookeeper2
+      - zookeeper3
+
+  kafka-ui:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka_stack_kafka_ui
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${KAFKA_CLUSTER_NAME}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka1:${KAFKA1_INTERNAL_PORT},kafka2:${KAFKA2_INTERNAL_PORT},kafka3:${KAFKA3_INTERNAL_PORT}
+    networks:
+      - kafka_net
+    ports:
+      - ${KAFKA_UI_PORT}:8080
+    depends_on:
+      - kafka1
+      - kafka2
+      - kafka3
+
+
+
+networks:
+
+  kafka_net:
+    name: kafka_stack_net
+    driver: bridge
+    attachable: true
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET}
+          gateway: ${NETWORK_GATEWAY}
+
+
+
+volumes:
+
+  zookeeper1_data:
+    name: kafka_stack_volume_zookeeper1_data
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER1_DATA_VOLUME_PATH}
+
+  zookeeper1_log:
+    name: kafka_stack_volume_zookeeper1_log
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER1_LOG_VOLUME_PATH}
+
+  zookeeper2_data:
+    name: kafka_stack_volume_zookeeper2_data
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER2_DATA_VOLUME_PATH}
+
+  zookeeper2_log:
+    name: kafka_stack_volume_zookeeper2_log
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER2_LOG_VOLUME_PATH}
+
+  zookeeper3_data:
+    name: kafka_stack_volume_zookeeper3_data
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER3_DATA_VOLUME_PATH}
+
+  zookeeper3_log:
+    name: kafka_stack_volume_zookeeper3_log
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER3_LOG_VOLUME_PATH}
+
+  kafka1:
+    name: kafka_stack_volume_kafka1
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${KAFKA1_VOLUME_PATH}
+
+  kafka2:
+    name: kafka_stack_volume_kafka2
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${KAFKA2_VOLUME_PATH}
+
+  kafka3:
+    name: kafka_stack_volume_kafka3
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${KAFKA3_VOLUME_PATH}

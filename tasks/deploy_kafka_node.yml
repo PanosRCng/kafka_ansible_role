@@ -1,0 +1,36 @@
+---
+
+
+- name: Deploy node | tear down existing docker stack services
+  community.docker.docker_compose_v2:
+    project_src: "{{ kafka_docker_stack_directory }}"
+    files: 
+      - kafka_cluster_node.yml
+    env_files: 
+      - env
+    state: absent
+    services:
+      - zookeeper
+      - kafka
+
+
+- name: Deploy node | deploy docker compose stack services
+  community.docker.docker_compose_v2:
+    project_src: "{{ kafka_docker_stack_directory }}"
+    files: 
+      - kafka_cluster_node.yml
+    env_files: 
+      - env
+    services:
+      - zookeeper
+      - kafka
+  register: output
+
+
+- name: Deploy node | verify that services are running
+  ansible.builtin.assert:
+    that:
+      - "output.containers[0].State == 'running'"
+      - "output.containers[1].State == 'running'"
+    fail_msg: "containers could not start"
+    success_msg: "containers started"

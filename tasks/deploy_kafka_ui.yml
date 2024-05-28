@@ -1,0 +1,21 @@
+---
+
+
+- name: Deploy ui | deploy docker compose stack services
+  community.docker.docker_compose_v2:
+    project_src: "{{ kafka_docker_stack_directory }}"
+    files: 
+      - kafka_cluster_node.yml
+    env_files: 
+      - env
+    services:
+      - kafka-ui
+  register: output
+
+
+- name: Deploy ui | verify that services are running
+  ansible.builtin.assert:
+    that:
+      - "output.containers[0].State == 'running'"
+    fail_msg: "containers could not start"
+    success_msg: "containers started"

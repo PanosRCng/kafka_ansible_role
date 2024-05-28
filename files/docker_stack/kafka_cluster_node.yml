@@ -1,0 +1,132 @@
+services:
+
+  zookeeper:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zookeeper
+    container_name: kafka_stack_zookeeper
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: ${ZOOKEEPER_CLIENT_PORT}
+      ZOOKEEPER_SERVER_ID: ${ZOOKEEPER_SERVER_ID}
+      ZOOKEEPER_SERVERS: ${ZOOKEEPER_SERVERS}
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_log:/var/lib/zookeeper/log
+    networks:
+      - kafka_net
+    ports:
+      - ${ZOOKEEPER_CLIENT_PORT}:${ZOOKEEPER_CLIENT_PORT}
+      - ${ZOOKEEPER_PEER_PORT}:2888
+      - ${ZOOKEEEPER_ELECTION_PORT}:3888
+
+  kafka:
+    user: "${USER_ID}:${GROUP_ID}"
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: kafka
+    container_name: kafka_stack_kafka
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://${HOSTNAME}:${KAFKA_INTERNAL_PORT},EXTERNAL://${HOSTNAME}:${KAFKA_EXTERNAL_PORT}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_DEFAULT_REPLICATION_FACTOR: ${KAFKA_DEFAULT_REPLICATION_FACTOR}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: ${KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR}
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: ${KAFKA_TRANSACTION_STATE_LOG_MIN_ISR}
+      KAFKA_JMX_PORT: ${KAFKA_JMX_PORT}
+      KAFKA_JMX_HOSTNAME: ${HOSTNAME}
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    networks:
+      - kafka_net
+    volumes:
+      - kafka:/var/lib/kafka/data
+    ports:
+      - ${KAFKA_EXTERNAL_PORT}:${KAFKA_EXTERNAL_PORT}
+      - ${KAFKA_INTERNAL_PORT}:${KAFKA_INTERNAL_PORT}
+      - ${KAFKA_JMX_PORT}:${KAFKA_JMX_PORT}
+    depends_on:
+      - zookeeper
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka_stack_kafka_ui
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: ${KAFKA_CLUSTER_NAME}
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: ${KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS}
+      KAFKA_CLUSTERS_0_METRICS_PORT: ${KAFKA_JMX_PORT}
+    networks:
+      - kafka_net
+    ports:
+      - ${KAFKA_UI_PORT}:8080
+    depends_on:
+      - kafka
+
+
+
+networks:
+
+  kafka_net:
+    name: kafka_stack_net
+    driver: bridge
+    attachable: true
+    driver_opts:
+      com.docker.network.bridge.enable_ip_masquerade: "true"
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.driver.mtu: "1500"
+    ipam:
+      driver: default
+      config:
+        - subnet: ${NETWORK_SUBNET}
+          gateway: ${NETWORK_GATEWAY}
+
+
+
+volumes:
+
+  zookeeper_data:
+    name: kafka_stack_volume_zookeeper_data
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER_DATA_VOLUME_PATH}
+
+  zookeeper_log:
+    name: kafka_stack_volume_zookeeper_log
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${ZOOKEEPER_LOG_VOLUME_PATH}
+
+  kafka:
+    name: kafka_stack_volume_kafka
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: ${KAFKA_VOLUME_PATH}

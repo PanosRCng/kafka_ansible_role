@@ -1,0 +1,41 @@
+---
+
+ansible_user: default_ansible_user
+
+docker_user: default_docker_user
+
+kafka_docker_stack_directory: "/home/default/docker_stacks/kafka_docker_stack"
+
+
+kafka_hostname: "{{ inventory_hostname }}"
+
+kafka_user_id: 0
+kafka_group_id: 0
+
+kafka_network_subnet: "172.17.0.0/24"
+kafka_network_gateway: "172.17.0.1"
+
+zookeeper_data_directory: "{{ kafka_docker_stack_directory }}/stack_data/zookeeper1/z_data/"
+zookeeper_log_directory: "{{ kafka_docker_stack_directory }}/stack_data/zookeeper1/z_log/"
+zookeeper_peer_port: 2888
+zookeeper_election_port: 3888
+zookeeper_client_port: 2181
+zookeeper_server_id: 1
+zookeeper_servers: "{{ inventory_hostname }}:{{ zookeeper_peer_port }}:{{ zookeeper_election_port }}"
+
+kafka_data_directory: "{{ kafka_docker_stack_directory }}/stack_data/kafka1/"
+kafka_external_port: 9092
+kafka_internal_port: 19092
+kafka_jmx_port: 9999
+kafka_zookeeper_connect: "{{ inventory_hostname }}:{{ zookeeper_client_port }}"
+kafka_broker_id: 1
+kafka_default_replication_factor: 1
+kafka_offsets_topic_replication_factor: 1
+kafka_translation_state_log_replication_factor: 1
+kafka_transaction_state_log_min_isr: 1
+
+kafka_ui: false
+kafka_ui_port: 8086
+kafka_cluster_name: "default_kafka_cluster"
+kafka_clusters_0_bootstrapservers: "{{ inventory_hostname }}:{{ kafka_internal_port }}"
+

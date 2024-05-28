@@ -1,0 +1,22 @@
+---
+
+
+- name: Copy docker stack files
+  include_tasks: copy_stack.yml
+
+
+- name: Get facts
+  include_tasks: get_facts.yml
+
+
+- name: Copy env file
+  include_tasks: copy_env.yml
+
+
+- name: Deploy kafka node
+  include_tasks: deploy_kafka_node.yml
+
+
+- name: Deploy kafka ui
+  include_tasks: deploy_kafka_ui.yml
+  when: kafka_ui

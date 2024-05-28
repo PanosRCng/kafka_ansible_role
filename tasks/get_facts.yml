@@ -1,0 +1,138 @@
+---
+
+- name: Get Facts | set fact zookeeper hosts
+  set_fact:
+    zookeeper_hosts: "{{ zookeeper_hosts|default([]) +
+      [
+        {
+          'host': item,
+          'peer_port': zookeeper_peer_port,
+          'election_port': zookeeper_election_port,
+          'client_port': zookeeper_client_port
+        }
+      ]
+    }}"
+  loop: "{{ groups['kafka'] }}"
+
+
+- name: Get Facts | set fact zookeeper_servers_list
+  set_fact:
+    zookeeper_servers_list: "{{ zookeeper_servers_list|default([]) +
+      [
+        item.host + ':' + item.peer_port|string + ':' + item.election_port|string
+      ]
+    }}"
+  loop: "{{ zookeeper_hosts }}"
+
+
+- name: Get Facts | set fact zookeeper_servers
+  set_fact:
+    zookeeper_servers: "{{ zookeeper_servers_list | join(';') | replace(old, new) }}"
+  vars:
+    old: "{{ inventory_hostname }}"
+    new: '0.0.0.0'
+
+
+- name: Get Facts | show zookeeper_servers
+  debug:
+      msg: "{{ zookeeper_servers }}"
+
+
+
+
+- name: Get Facts | set fact kafka_zookeeper_connect_list
+  set_fact:
+    kafka_zookeeper_connect_list: "{{ kafka_zookeeper_connect_list|default([]) +
+      [
+        item.host + ':' + item.client_port|string
+      ]
+    }}"
+  loop: "{{ zookeeper_hosts }}"
+
+
+- name: Get Facts | set fact kafka_zookeeper_connect
+  set_fact:
+    kafka_zookeeper_connect: "{{ kafka_zookeeper_connect_list | join(',') }}"
+
+
+- name: Get Facts | show kafka_zookeeper_connect
+  debug:
+      msg: "{{ kafka_zookeeper_connect }}"
+
+
+
+
+- name: Get Facts | set fact kafka hosts
+  set_fact:
+    kafka_hosts: "{{ kafka_hosts|default([]) +
+      [
+        {
+          'host': item,
+          'external_port': kafka_external_port,
+          'broker_id': hostvars[item]['kafka_broker_id']
+        }
+      ]
+    }}"
+  loop: "{{ groups['kafka'] }}"
+
+
+- name: Get Facts | set fact kafka_clusters_0_bootstrapservers_list
+  set_fact:
+    kafka_clusters_0_bootstrapservers_list: "{{ kafka_clusters_0_bootstrapservers_list|default([]) +
+      [
+        item.host + ':' + item.external_port|string
+      ]
+    }}"
+  loop: "{{ kafka_hosts }}"
+
+
+- name: Get Facts | set fact kafka_clusters_0_bootstrapservers
+  set_fact:
+    kafka_clusters_0_bootstrapservers: "{{ kafka_clusters_0_bootstrapservers_list | join(',') }}"
+
+
+- name: Get Facts | show kafka_clusters_0_bootstrapservers
+  debug:
+      msg: "{{ kafka_clusters_0_bootstrapservers }}"
+
+
+
+
+- name: Get Facts | set fact kafka_default_replication_factor
+  set_fact:
+    kafka_default_replication_factor: "{{ kafka_hosts | length }}"
+
+
+- name: Get Facts | show kafka_default_replication_factor
+  debug:
+      msg: "{{ kafka_default_replication_factor }}"
+
+
+- name: Get Facts | set fact kafka_offsets_topic_replication_factor
+  set_fact:
+    kafka_offsets_topic_replication_factor: "{{ kafka_hosts | length }}"
+
+
+- name: Get Facts | show kafka_offsets_topic_replication_factor
+  debug:
+      msg: "{{ kafka_offsets_topic_replication_factor }}"
+
+
+- name: Get Facts | set fact kafka_translation_state_log_replication_factor
+  set_fact:
+    kafka_translation_state_log_replication_factor: "{{ kafka_hosts | length }}"
+
+
+- name: Get Facts | show kafka_translation_state_log_replication_factor
+  debug:
+      msg: "{{ kafka_translation_state_log_replication_factor }}"
+
+
+- name: Get Facts | set fact kafka_transaction_state_log_min_isr
+  set_fact:
+    kafka_transaction_state_log_min_isr: "{{ kafka_hosts | length -1 }}"
+  when: kafka_hosts | length > 1
+
+- name: Get Facts | show kafka_transaction_state_log_min_isr
+  debug:
+      msg: "{{ kafka_transaction_state_log_min_isr }}"
