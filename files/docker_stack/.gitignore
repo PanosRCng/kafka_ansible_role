@@ -1,6 +1,6 @@
-#stack_data/kafka1/
-#stack_data/kafka2/
-#stack_data/kafka3/
-#stack_data/zookeeper1/
-#stack_data/zookeeper2/
-#stack_data/zookeeper3/
+stack_data/kafka1/
+stack_data/kafka2/
+stack_data/kafka3/
+stack_data/zookeeper1/
+stack_data/zookeeper2/
+stack_data/zookeeper3/
